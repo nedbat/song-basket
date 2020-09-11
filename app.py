@@ -80,4 +80,4 @@ def app_factory() -> Flask:
 
 if __name__ == '__main__':
     application = app_factory()
-    application.run('127.0.0.1', 5000)
+    application.run(threaded=True, port=5000)

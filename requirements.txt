@@ -1,1 +1,3 @@
 tekore
+Flask
+gunicorn
