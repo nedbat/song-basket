@@ -78,6 +78,7 @@ def app_factory() -> Flask:
     return app
 
 
+app = app_factory()
+
 if __name__ == '__main__':
-    app = app_factory()
     app.run(threaded=True, port=5000)
