@@ -87,7 +87,7 @@ def main():
             item = playback.item
             page += f'<br>Now playing: {item.name} '
             if item.id in tracks:
-                page += f' (in playlist)'
+                page += f' (in playlist. <a href="/rmfromlist?id={item.id}">Remove from playlist</a>)'
             else:
                 page += f' (<a href="/addtolist?id={item.id}">Add to playlist</a>)'
         else:
@@ -164,6 +164,18 @@ def add_to_list():
     plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
     spotify.playlist_add(plid, [track.uri])
     tracks.add(track_id)
+    users[uid, "playlist"] = (plid, pl_name, tracks)
+    return redirect('/', 307)
+
+@app.route('/rmfromlist', methods=['GET'])
+def rm_from_list():
+    uid, token = get_token()
+    spotify = tk.Spotify(token)
+    track_id = request.args.get('id')
+    track = spotify.track(track_id)
+    plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
+    spotify.playlist_remove(plid, [track.uri])
+    tracks.remove(track_id)
     users[uid, "playlist"] = (plid, pl_name, tracks)
     return redirect('/', 307)
 
