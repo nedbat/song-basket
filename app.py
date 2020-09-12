@@ -49,8 +49,7 @@ SCOPE = (
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'aliens'
 
-@app.route('/', methods=['GET'])
-def main():
+def get_token():
     uid = session.get('user', None)
     if uid is not None:
         token = users.get((uid, "token"), None)
@@ -60,11 +59,19 @@ def main():
     # Return early if no login or old session
     if uid is None or token is None:
         session.pop('user', None)
-        return 'You can <a href="/login">login</a>'
+        return None
 
     if token.is_expiring:
         token = cred.refresh(token)
         users[uid, "token"] = token
+
+    return token
+
+@app.route('/', methods=['GET'])
+def main():
+    token = get_token()
+    if token is None:
+        return 'You can <a href="/login">login</a>'
 
     spotify = tk.Spotify(token)
     user = spotify.current_user()
@@ -81,7 +88,7 @@ def main():
     playlists = spotify.playlists(user.id)
     page += f'<br>Playlists:<ul>'
     for pl in playlists.items:
-        page += f'<li>{pl.name}</li>'
+        page += f'<li><a href="/setplaylist?id={pl.id}">{pl.name}</a></li>'
     page += '</ul>'
 
     return page
@@ -117,6 +124,17 @@ def logout():
         users.pop((uid, "token"), None)
     return redirect('/', 307)
 
+@app.route('/setplaylist', methods=['GET'])
+def set_playlist():
+    token = get_token()
+    if token is None:
+        return 'You can <a href="/login">login</a>'
+
+    spotify = tk.Spotify(token)
+    plid = request.args.get('id')
+    playlist = spotify.playlist(plid)
+    return repr(playlist)
+    
 
 if __name__ == '__main__':
     app.run(threaded=True, port=5000)
