@@ -71,7 +71,7 @@ def app_factory() -> Flask:
 
         with spotify.token_as(token):
             user = spotify.current_user()
-        page = f"<br>User: {user.display_name}. "
+        page = f"User: {user.display_name}. "
         page += f'<br>You can <a href="/logout">logout</a>'
 
         try:
@@ -82,6 +82,13 @@ def app_factory() -> Flask:
             page += f'<br>Now playing: {item}'
         except tk.HTTPError:
             page += '<br>Error in retrieving now playing!'
+
+        with spotify.token_as(token):
+            playlists = spotify.playlists(user.id)
+            page += f'<br>Playlists:<ul>'
+            for pl in playlists.items:
+                page += f'<li>{pl.name}</li>'
+            page += '</ul>'
 
         return page
 
