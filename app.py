@@ -1,5 +1,6 @@
 import itertools
 import os
+import pickle
 
 import redis
 import tekore as tk
@@ -15,13 +16,13 @@ class RedisDict:
         value = self.r.get(key)
         if value is None:
             return default
-        return value
+        return pickle.loads(value)
 
     def __getitem__(self, key):
         return self.get(key)
 
     def __setitem__(self, key, value):
-        self.r.set(key, value)
+        self.r.set(key, pickle.dumps(value))
 
     def pop(self, key, default=None):
         value = self.get(key, default)
