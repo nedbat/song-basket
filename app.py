@@ -21,7 +21,9 @@ def app_factory() -> Flask:
     @app.route('/', methods=['GET'])
     def main():
         user = session.get('user', None)
+        print(f"user = {user!r}")
         token = users.get(user, None)
+        print(f"token = {token!r}")
 
         # Return early if no login or old session
         if user is None or token is None:
@@ -51,6 +53,7 @@ def app_factory() -> Flask:
 
         scope = tk.scope.user_read_currently_playing
         auth = tk.UserAuth(cred, scope)
+        print(f"auth = {auth!r}")
         auths[auth.state] = auth
         return redirect(auth.url, 307)
 
