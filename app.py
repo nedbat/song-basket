@@ -40,7 +40,7 @@ in_link = '<a href="/login">login</a>'
 out_link = '<a href="/logout">logout</a>'
 login_msg = f'You can {in_link} or {out_link}'
 
-SCOPE = tk.scope.user_read_currently_playing
+SCOPE = tk.scope.every
 
 def app_factory() -> Flask:
     app = Flask(__name__)
@@ -63,6 +63,10 @@ def app_factory() -> Flask:
         if token.is_expiring:
             token = cred.refresh(token)
             users[user] = token
+
+        with spotify.token_as(token):
+            user = spotify.current_user()
+        page += f"<br>User: <a href='{user.href}'>{user.display_name}</a>"
 
         try:
             with spotify.token_as(token):
