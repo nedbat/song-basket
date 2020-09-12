@@ -75,6 +75,7 @@ def main():
 
     page = "<!DOCTYPE html><html><head>"
     page += "<meta http-equiv='refresh' content='5'>"
+    page += "<style>.track { font-weight: bold; } .playlist { font-weight: bold; }</style>"
     page += "<body>"
 
     spotify = tk.Spotify(token)
@@ -83,15 +84,15 @@ def main():
 
     plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
     if plid:
-        page += f"<br>Playlist: {pl_name}, {len(tracks)} tracks"
+        page += f"<br>Playlist: <span class='playlist'>{pl_name}</span>, {len(tracks)} tracks"
 
     try:
         playback = spotify.playback_currently_playing()
         if playback:
             item = playback.item
-            page += f'<br>Now playing: {item.name} '
+            page += f"<br>Playing: <span class='track'>{item.name}</span>"
             if item.id in tracks:
-                page += f' (in playlist. <a href="/rmfromlist?id={item.id}">Remove from playlist</a>)'
+                page += f' (in playlist. <a href="/rmfromlist?id={item.id}">Remove</a>)'
             else:
                 page += f' (<a href="/addtolist?id={item.id}">Add to playlist</a>)'
         else:
