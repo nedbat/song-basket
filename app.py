@@ -73,9 +73,13 @@ def main():
     if token is None:
         return 'You can <a href="/login">login</a>'
 
+    page = "<!DOCTYPE html><html><head>"
+    page += "<meta http-equiv='refresh' content='5'>"
+    page += "<body>"
+
     spotify = tk.Spotify(token)
     user = spotify.current_user()
-    page = f"User: {user.display_name} (<a href='/logout'>logout</a>)"
+    page += f"User: {user.display_name} (<a href='/logout'>logout</a>)"
 
     plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
     if plid:
