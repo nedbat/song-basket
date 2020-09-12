@@ -34,7 +34,7 @@ conf = tk.config_from_environment()
 cred = tk.Credentials(*conf)
 spotify = tk.Spotify()
 
-auths = RedisDict()     # Ongoing authorisations: state -> UserAuth
+auths = {}     # Ongoing authorisations: state -> UserAuth
 users = RedisDict()     # User tokens: state -> token (use state as a user ID)
 
 in_link = '<a href="/login">login</a>'
