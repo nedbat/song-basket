@@ -34,7 +34,7 @@ conf = tk.config_from_environment()
 cred = tk.Credentials(*conf)
 spotify = tk.Spotify()
 
-auths = {}     # Ongoing authorisations: state -> UserAuth
+auths = RedisDict()     # Ongoing authorisations: state -> UserAuth
 users = RedisDict()     # User tokens: state -> token (use state as a user ID)
 
 in_link = '<a href="/login">login</a>'
@@ -85,14 +85,16 @@ def app_factory() -> Flask:
         scope = tk.scope.user_read_currently_playing
         auth = tk.UserAuth(cred, scope)
         print(f"auth = {auth!r}")
-        auths[auth.state] = auth
+        #auths[auth.state] = auth
         return redirect(auth.url, 307)
 
     @app.route('/callback', methods=['GET'])
     def login_callback():
         code = request.args.get('code', None)
         state = request.args.get('state', None)
-        auth = auths.pop(state, None)
+        #auth = auths.pop(state, None)
+        auth = tk.UserAuth(cred, tk.scope.user_read_currently_playing)
+        auth.state = state
 
         if auth is None:
             return 'Invalid state!', 400
