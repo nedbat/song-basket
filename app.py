@@ -59,17 +59,17 @@ def get_token():
     # Return early if no login or old session
     if uid is None or token is None:
         session.pop('user', None)
-        return None
+        return None, None
 
     if token.is_expiring:
         token = cred.refresh(token)
         users[uid, "token"] = token
 
-    return token
+    return uid, token
 
 @app.route('/', methods=['GET'])
 def main():
-    token = get_token()
+    uid, token = get_token()
     if token is None:
         return 'You can <a href="/login">login</a>'
 
@@ -77,6 +77,10 @@ def main():
     user = spotify.current_user()
     page = f"User: {user.display_name}. "
     page += f'<br>You can <a href="/logout">logout</a>'
+
+    plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
+    if plid:
+        page += f"<br>Playlist: {pl_name}, {len(tracks)} tracks"
 
     try:
         playback = spotify.playback_currently_playing()
@@ -124,16 +128,30 @@ def logout():
         users.pop((uid, "token"), None)
     return redirect('/', 307)
 
+def playlist_tracks(spotify, playlist):
+    track_ids = set()
+    offset = 0
+    while offset < playlist.tracks.total:
+        details = spotify.playlist_items(playlist.id, offset=offset)
+        track_ids.update(track.track.id for track in details.items)
+        offset += 100
+    return track_ids
+
+
 @app.route('/setplaylist', methods=['GET'])
 def set_playlist():
-    token = get_token()
+    uid, token = get_token()
     if token is None:
         return 'You can <a href="/login">login</a>'
 
     spotify = tk.Spotify(token)
     plid = request.args.get('id')
     playlist = spotify.playlist(plid)
-    return repr(playlist)
+    print(repr(playlist))
+    tracks = playlist_tracks(spotify, playlist)
+    print(f"With {len(tracks)} tracks")
+    users[uid, "playlist"] = (plid, playlist.name, tracks)
+    return redirect('/', 307)
     
 
 if __name__ == '__main__':
