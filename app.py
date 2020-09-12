@@ -36,11 +36,17 @@ spotify = tk.Spotify()
 
 users = RedisDict()     # User tokens: state -> token (use state as a user ID)
 
-in_link = '<a href="/login">login</a>'
-out_link = '<a href="/logout">logout</a>'
-login_msg = f'You can {in_link} or {out_link}'
 
-SCOPE = tk.scope.every
+SCOPE = (
+    tk.scope.playlist_modify_private +
+    tk.scope.playlist_modify_public +
+    tk.scope.playlist_read_collaborative +
+    tk.scope.playlist_read_private +
+    tk.scope.user_modify_playback_state +
+    tk.scope.user_read_currently_playing +
+    tk.scope.user_read_playback_position +
+    tk.scope.user_read_playback_state
+)
 
 def app_factory() -> Flask:
     app = Flask(__name__)
@@ -57,16 +63,16 @@ def app_factory() -> Flask:
         # Return early if no login or old session
         if user is None or token is None:
             session.pop('user', None)
-            return f'User ID: None<br>{login_msg}'
+            return 'You can <a href="/login">login</a>'
 
-        page = f'User ID: {user}<br>{login_msg}'
         if token.is_expiring:
             token = cred.refresh(token)
             users[user] = token
 
         with spotify.token_as(token):
             user = spotify.current_user()
-        page += f"<br>User: <a href='{user.href}'>{user.display_name}</a>"
+        page = f"<br>User: {user.display_name}. "
+        page += f'<br>You can <a href="/logout">logout</a>'
 
         try:
             with spotify.token_as(token):
