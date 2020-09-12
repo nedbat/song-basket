@@ -75,8 +75,7 @@ def main():
 
     spotify = tk.Spotify(token)
     user = spotify.current_user()
-    page = f"User: {user.display_name}. "
-    page += f'<br>You can <a href="/logout">logout</a>'
+    page = f"User: {user.display_name} (<a href='/logout'>logout</a>)"
 
     plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
     if plid:
@@ -85,7 +84,12 @@ def main():
     try:
         playback = spotify.playback_currently_playing()
         if playback:
-            page += f'<br>Now playing: {playback.item.name} ({playback.item.uri})'
+            item = playback.item
+            page += f'<br>Now playing: {item.name} '
+            if item.id in tracks:
+                page += f' (in playlist)'
+            else:
+                page += f' (<a href="/addtolist?id={item.id}">Add to playlist</a>)'
         else:
             page += f'<br>Nothing playing'
     except tk.HTTPError:
@@ -143,18 +147,25 @@ def playlist_tracks(spotify, playlist):
 @app.route('/setplaylist', methods=['GET'])
 def set_playlist():
     uid, token = get_token()
-    if token is None:
-        return 'You can <a href="/login">login</a>'
-
     spotify = tk.Spotify(token)
     plid = request.args.get('id')
     playlist = spotify.playlist(plid)
-    print(repr(playlist))
     tracks = playlist_tracks(spotify, playlist)
     print(f"With {len(tracks)} tracks")
     users[uid, "playlist"] = (plid, playlist.name, tracks)
     return redirect('/', 307)
     
+@app.route('/addtolist', methods=['GET'])
+def add_to_list():
+    uid, token = get_token()
+    spotify = tk.Spotify(token)
+    track_id = request.args.get('id')
+    track = spotify.track(track_id)
+    plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
+    spotify.playlist_add(plid, [track.uri])
+    tracks.add(track_id)
+    users[uid, "playlist"] = (plid, pl_name, tracks)
+    return redirect('/', 307)
 
 if __name__ == '__main__':
     app.run(threaded=True, port=5000)
