@@ -34,13 +34,13 @@ conf = tk.config_from_environment()
 cred = tk.Credentials(*conf)
 spotify = tk.Spotify()
 
-auths = RedisDict()     # Ongoing authorisations: state -> UserAuth
 users = RedisDict()     # User tokens: state -> token (use state as a user ID)
 
 in_link = '<a href="/login">login</a>'
 out_link = '<a href="/logout">logout</a>'
 login_msg = f'You can {in_link} or {out_link}'
 
+SCOPE = tk.scope.user_read_currently_playing
 
 def app_factory() -> Flask:
     app = Flask(__name__)
@@ -49,12 +49,10 @@ def app_factory() -> Flask:
     @app.route('/', methods=['GET'])
     def main():
         user = session.get('user', None)
-        print(f"user = {user!r}")
         if user is not None:
             token = users.get(user, None)
         else:
             token = None
-        print(f"token = {token!r}")
 
         # Return early if no login or old session
         if user is None or token is None:
@@ -82,18 +80,15 @@ def app_factory() -> Flask:
         if 'user' in session:
             return redirect('/', 307)
 
-        scope = tk.scope.user_read_currently_playing
-        auth = tk.UserAuth(cred, scope)
-        print(f"auth = {auth!r}")
-        #auths[auth.state] = auth
+        auth = tk.UserAuth(cred, SCOPE)
         return redirect(auth.url, 307)
 
     @app.route('/callback', methods=['GET'])
     def login_callback():
         code = request.args.get('code', None)
         state = request.args.get('state', None)
-        #auth = auths.pop(state, None)
-        auth = tk.UserAuth(cred, tk.scope.user_read_currently_playing)
+        # This seems like the wrong way to make this work, but it works.
+        auth = tk.UserAuth(cred, SCOPE)
         auth.state = state
 
         if auth is None:
