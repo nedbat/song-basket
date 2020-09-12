@@ -13,7 +13,7 @@ class RedisDict:
         self.r = redis.from_url(os.environ.get("REDIS_URL"), db=next(self.db_nums))
 
     def get(self, key, default=None):
-        value = self.r.get(key)
+        value = self.r.get(pickle.dumps(key))
         if value is None:
             return default
         return pickle.loads(value)
@@ -22,11 +22,11 @@ class RedisDict:
         return self.get(key)
 
     def __setitem__(self, key, value):
-        self.r.set(key, pickle.dumps(value))
+        self.r.set(pickle.dumps(key), pickle.dumps(value))
 
     def pop(self, key, default=None):
         value = self.get(key, default)
-        self.r.delete(key)
+        self.r.delete(pickle.dumps(key))
         return value
 
 
@@ -51,20 +51,20 @@ app.config['SECRET_KEY'] = 'aliens'
 
 @app.route('/', methods=['GET'])
 def main():
-    user = session.get('user', None)
-    if user is not None:
-        token = users.get(user, None)
+    uid = session.get('user', None)
+    if uid is not None:
+        token = users.get((uid, "token"), None)
     else:
         token = None
 
     # Return early if no login or old session
-    if user is None or token is None:
+    if uid is None or token is None:
         session.pop('user', None)
         return 'You can <a href="/login">login</a>'
 
     if token.is_expiring:
         token = cred.refresh(token)
-        users[user] = token
+        users[uid, "token"] = token
 
     spotify = tk.Spotify(token)
     user = spotify.current_user()
@@ -73,7 +73,6 @@ def main():
 
     try:
         playback = spotify.playback_currently_playing()
-
         item = playback.item.name if playback else None
         page += f'<br>Now playing: {item}'
     except tk.HTTPError:
@@ -108,14 +107,14 @@ def login_callback():
 
     token = auth.request_token(code, state)
     session['user'] = state
-    users[state] = token
+    users[state, "token"] = token
     return redirect('/', 307)
 
 @app.route('/logout', methods=['GET'])
 def logout():
     uid = session.pop('user', None)
     if uid is not None:
-        users.pop(uid, None)
+        users.pop((uid, "token"), None)
     return redirect('/', 307)
 
 
