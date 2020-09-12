@@ -182,6 +182,7 @@ def rm_from_list():
     spotify.playlist_remove(plid, [track.uri])
     tracks.remove(track_id)
     users[uid, "playlist"] = (plid, pl_name, tracks)
+    spotify.playback_next()
     return redirect('/', 307)
 
 if __name__ == '__main__':
