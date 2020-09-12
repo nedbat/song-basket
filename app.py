@@ -49,7 +49,10 @@ def app_factory() -> Flask:
     def main():
         user = session.get('user', None)
         print(f"user = {user!r}")
-        token = users.get(user, None)
+        if user is not None:
+            token = users.get(user, None)
+        else:
+            token = None
         print(f"token = {token!r}")
 
         # Return early if no login or old session
