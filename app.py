@@ -84,8 +84,10 @@ def main():
 
     try:
         playback = spotify.playback_currently_playing()
-        item = playback.item.name if playback else None
-        page += f'<br>Now playing: {item}'
+        if playback:
+            page += f'<br>Now playing: {playback.item.name} ({playback.item.uri})'
+        else:
+            page += f'<br>Nothing playing'
     except tk.HTTPError:
         page += '<br>Error in retrieving now playing!'
 
