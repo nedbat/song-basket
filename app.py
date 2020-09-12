@@ -1,13 +1,40 @@
-import tekore as tk
+import itertools
+import os
 
+import redis
+import tekore as tk
 from flask import Flask, request, redirect, session
+
+class RedisDict:
+    db_nums = itertools.count()
+
+    def __init__(self):
+        self.r = redis.from_url(os.environ.get("REDIS_URL"), db=next(self.db_nums))
+
+    def get(self, key, default=None):
+        value = self.r.get(key)
+        if value is None:
+            return default
+        return value
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.r.set(key, value)
+
+    def pop(self, key, default=None):
+        value = self.get(key, default)
+        self.r.delete(key)
+        return value
+
 
 conf = tk.config_from_environment()
 cred = tk.Credentials(*conf)
 spotify = tk.Spotify()
 
-auths = {}  # Ongoing authorisations: state -> UserAuth
-users = {}  # User tokens: state -> token (use state as a user ID)
+auths = RedisDict()     # Ongoing authorisations: state -> UserAuth
+users = RedisDict()     # User tokens: state -> token (use state as a user ID)
 
 in_link = '<a href="/login">login</a>'
 out_link = '<a href="/logout">logout</a>'

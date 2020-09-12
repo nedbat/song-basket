@@ -1,3 +1,4 @@
 tekore
 Flask
 gunicorn
+redis
