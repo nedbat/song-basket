@@ -63,6 +63,9 @@ def main():
 
     if current_playlist:
         page += f"<br>Playlist: <span class='playlist'>{current_playlist.name}</span>, {len(playlist_tracks)} tracks"
+        page += " (<a href='/playlists'>Change</a>)"
+    else:
+        page += f"<br>No playlist (<a href='/playlists'>Choose one</a>)"
 
     try:
         playback = spotify.playback_currently_playing()
@@ -79,12 +82,18 @@ def main():
     except tk.HTTPError:
         page += '<br>Error in retrieving now playing!'
 
-    playlists = spotify.playlists(user.id)
-    page += f'<br>Playlists:<ul>'
-    for pl in playlists.items:
-        page += f'<li><a href="/setplaylist?id={pl.id}">{pl.name}</a></li>'
-    page += '</ul>'
+    return page
 
+@app.route('/playlists', methods=['GET'])
+def playlists():
+    uid, token = get_token()
+    spotify = tk.Spotify(token)
+    user = spotify.current_user()
+    playlists = spotify.playlists(user.id)
+    page = "<br>Playlists:<ul>"
+    for pl in playlists.items:
+        page += f"<li><a href='/setplaylist?id={pl.id}'>{pl.name}</a></li>"
+    page += "</ul>"
     return page
 
 @app.route('/login', methods=['GET'])
