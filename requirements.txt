@@ -1,4 +1,2 @@
 tekore
 Flask
-gunicorn
-redis

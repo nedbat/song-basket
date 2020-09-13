@@ -1,39 +1,13 @@
-import itertools
-import os
-import pickle
+"""Spoton playlist manager."""
 
-import redis
 import tekore as tk
 from flask import Flask, request, redirect, session
 
-class RedisDict:
-    db_nums = itertools.count()
-
-    def __init__(self):
-        self.r = redis.from_url(os.environ.get("REDIS_URL"), db=next(self.db_nums))
-
-    def get(self, key, default=None):
-        value = self.r.get(pickle.dumps(key))
-        if value is None:
-            return default
-        return pickle.loads(value)
-
-    def __getitem__(self, key):
-        return self.get(key)
-
-    def __setitem__(self, key, value):
-        self.r.set(pickle.dumps(key), pickle.dumps(value))
-
-    def pop(self, key, default=None):
-        value = self.get(key, default)
-        self.r.delete(pickle.dumps(key))
-        return value
-
-
 cred = tk.Credentials(*tk.config_from_environment())
 
-users = RedisDict()     # User tokens: state -> token (use state as a user ID)
-
+users = {}  # User tokens: state -> token (use state as a user ID)
+current_playlist = None
+playlist_tracks = None
 
 SCOPE = (
     tk.scope.playlist_modify_private +
@@ -47,12 +21,12 @@ SCOPE = (
 )
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'aliens'
+app.config['SECRET_KEY'] = 'sP0t0N'
 
 def get_token():
     uid = session.get('user', None)
     if uid is not None:
-        token = users.get((uid, "token"), None)
+        token = users.get(uid, None)
     else:
         token = None
 
@@ -63,7 +37,7 @@ def get_token():
 
     if token.is_expiring:
         token = cred.refresh(token)
-        users[uid, "token"] = token
+        users[uid] = token
 
     return uid, token
 
@@ -82,16 +56,15 @@ def main():
     user = spotify.current_user()
     page += f"User: {user.display_name} (<a href='/logout'>logout</a>)"
 
-    plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
-    if plid:
-        page += f"<br>Playlist: <span class='playlist'>{pl_name}</span>, {len(tracks)} tracks"
+    if current_playlist:
+        page += f"<br>Playlist: <span class='playlist'>{current_playlist.name}</span>, {len(playlist_tracks)} tracks"
 
     try:
         playback = spotify.playback_currently_playing()
         if playback:
             item = playback.item
             page += f"<br>Playing: <span class='track'>{item.name}</span>"
-            if item.id in tracks:
+            if item.id in playlist_tracks:
                 page += f' (in playlist. <a href="/rmfromlist?id={item.id}">Remove</a>)'
             else:
                 page += f' (<a href="/addtolist?id={item.id}">Add to playlist</a>)'
@@ -129,14 +102,14 @@ def login_callback():
 
     token = auth.request_token(code, state)
     session['user'] = state
-    users[state, "token"] = token
+    users[state] = token
     return redirect('/', 307)
 
 @app.route('/logout', methods=['GET'])
 def logout():
     uid = session.pop('user', None)
     if uid is not None:
-        users.pop((uid, "token"), None)
+        users.pop(uid, None)
     return redirect('/', 307)
 
 def playlist_tracks(spotify, playlist):
@@ -151,13 +124,12 @@ def playlist_tracks(spotify, playlist):
 
 @app.route('/setplaylist', methods=['GET'])
 def set_playlist():
+    global current_playlist, playlist_tracks
     uid, token = get_token()
     spotify = tk.Spotify(token)
     plid = request.args.get('id')
-    playlist = spotify.playlist(plid)
-    tracks = playlist_tracks(spotify, playlist)
-    print(f"With {len(tracks)} tracks")
-    users[uid, "playlist"] = (plid, playlist.name, tracks)
+    current_playlist = spotify.playlist(plid)
+    playlist_tracks = playlist_tracks(spotify, current_playlist)
     return redirect('/', 307)
     
 @app.route('/addtolist', methods=['GET'])
@@ -166,10 +138,8 @@ def add_to_list():
     spotify = tk.Spotify(token)
     track_id = request.args.get('id')
     track = spotify.track(track_id)
-    plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
-    spotify.playlist_add(plid, [track.uri])
-    tracks.add(track_id)
-    users[uid, "playlist"] = (plid, pl_name, tracks)
+    spotify.playlist_add(current_playlist.id, [track.uri])
+    playlist_tracks.add(track_id)
     return redirect('/', 307)
 
 @app.route('/rmfromlist', methods=['GET'])
@@ -178,10 +148,8 @@ def rm_from_list():
     spotify = tk.Spotify(token)
     track_id = request.args.get('id')
     track = spotify.track(track_id)
-    plid, pl_name, tracks = users.get((uid, "playlist"), (None, "", set()))
-    spotify.playlist_remove(plid, [track.uri])
-    tracks.remove(track_id)
-    users[uid, "playlist"] = (plid, pl_name, tracks)
+    spotify.playlist_remove(current_playlist.id, [track.uri])
+    playlist_tracks.remove(track_id)
     spotify.playback_next()
     return redirect('/', 307)
 
