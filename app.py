@@ -50,7 +50,7 @@ def get_token():
 def main():
     uid, token = get_token()
     if token is None:
-        return 'You can <a href="/login">login</a>'
+        return "[<a href='/login'>Login</a>]"
 
     page = "<!DOCTYPE html><html><head>"
     page += "<meta http-equiv='refresh' content='5'>"
@@ -59,13 +59,13 @@ def main():
 
     spotify = tk.Spotify(token)
     user = spotify.current_user()
-    page += f"User: {user.display_name} (<a href='/logout'>logout</a>)"
+    page += f"User: {user.display_name} [<a href='/logout'>Logout</a>]"
 
     if current_playlist:
         page += f"<br>Playlist: <span class='playlist'>{current_playlist.name}</span>, {len(playlist_tracks)} tracks"
-        page += " (<a href='/playlists'>Change</a>)"
+        page += " [<a href='/playlists'>Change</a>]"
     else:
-        page += f"<br>No playlist (<a href='/playlists'>Choose one</a>)"
+        page += f"<br>No playlist [<a href='/playlists'>Choose one</a>]"
 
     try:
         playback = spotify.playback_currently_playing()
@@ -74,13 +74,13 @@ def main():
             page += f"<br>Playing: <span class='track'>{item.name}</span>"
             if playlist_tracks:
                 if item.uri in playlist_tracks:
-                    page += f' (in playlist. <a href="/rmfromlist?uri={item.uri}">Remove</a>)'
+                    page += f' in playlist. [<a href="/rmfromlist?uri={item.uri}">Remove</a>]'
                 else:
-                    page += f' (<a href="/addtolist?uri={item.uri}">Add to playlist</a>)'
+                    page += f' [<a href="/addtolist?uri={item.uri}">Add to playlist</a>]'
         else:
-            page += f'<br>Nothing playing'
+            page += "<br>Nothing playing"
     except tk.HTTPError:
-        page += '<br>Error in retrieving now playing!'
+        page += "<br>Error in retrieving now playing!"
 
     return page
 
