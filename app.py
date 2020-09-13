@@ -5,8 +5,13 @@ from flask import Flask, request, redirect, session
 
 cred = tk.Credentials(*tk.config_from_environment())
 
-users = {}  # User tokens: state -> token (use state as a user ID)
+# User tokens: state -> token (use state as a user ID)
+users = {}
+
+# A Tekore Playlist object.
 current_playlist = None
+
+# The set of the playlists's track uri's.
 playlist_tracks = None
 
 SCOPE = (
@@ -64,10 +69,11 @@ def main():
         if playback:
             item = playback.item
             page += f"<br>Playing: <span class='track'>{item.name}</span>"
-            if item.id in playlist_tracks:
-                page += f' (in playlist. <a href="/rmfromlist?id={item.id}">Remove</a>)'
-            else:
-                page += f' (<a href="/addtolist?id={item.id}">Add to playlist</a>)'
+            if playlist_tracks:
+                if item.uri in playlist_tracks:
+                    page += f' (in playlist. <a href="/rmfromlist?uri={item.uri}">Remove</a>)'
+                else:
+                    page += f' (<a href="/addtolist?uri={item.uri}">Add to playlist</a>)'
         else:
             page += f'<br>Nothing playing'
     except tk.HTTPError:
@@ -112,14 +118,14 @@ def logout():
         users.pop(uid, None)
     return redirect('/', 307)
 
-def playlist_tracks(spotify, playlist):
-    track_ids = set()
+def get_playlist_tracks(spotify, playlist):
+    track_uris = set()
     offset = 0
     while offset < playlist.tracks.total:
         details = spotify.playlist_items(playlist.id, offset=offset)
-        track_ids.update(track.track.id for track in details.items)
+        track_uris.update(track.track.uri for track in details.items)
         offset += 100
-    return track_ids
+    return track_uris
 
 
 @app.route('/setplaylist', methods=['GET'])
@@ -129,27 +135,25 @@ def set_playlist():
     spotify = tk.Spotify(token)
     plid = request.args.get('id')
     current_playlist = spotify.playlist(plid)
-    playlist_tracks = playlist_tracks(spotify, current_playlist)
+    playlist_tracks = get_playlist_tracks(spotify, current_playlist)
     return redirect('/', 307)
     
 @app.route('/addtolist', methods=['GET'])
 def add_to_list():
     uid, token = get_token()
     spotify = tk.Spotify(token)
-    track_id = request.args.get('id')
-    track = spotify.track(track_id)
-    spotify.playlist_add(current_playlist.id, [track.uri])
-    playlist_tracks.add(track_id)
+    track_uri = request.args.get('uri')
+    spotify.playlist_add(current_playlist.id, [track_uri])
+    playlist_tracks.add(track_uri)
     return redirect('/', 307)
 
 @app.route('/rmfromlist', methods=['GET'])
 def rm_from_list():
     uid, token = get_token()
     spotify = tk.Spotify(token)
-    track_id = request.args.get('id')
-    track = spotify.track(track_id)
-    spotify.playlist_remove(current_playlist.id, [track.uri])
-    playlist_tracks.remove(track_id)
+    track_uri = request.args.get('uri')
+    spotify.playlist_remove(current_playlist.id, [track_uri])
+    playlist_tracks.remove(track_uri)
     spotify.playback_next()
     return redirect('/', 307)
 
