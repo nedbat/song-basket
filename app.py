@@ -76,7 +76,10 @@ def main():
                 if item.uri in playlist_tracks:
                     page += f' in playlist. [<a href="/rmfromlist?uri={item.uri}">Remove</a>]'
                 else:
-                    page += f' [<a href="/addtolist?uri={item.uri}">Add to playlist</a>]'
+                    page += f''' [
+                        <a href="/addtolist?uri={item.uri}">Add to playlist</a>
+                        <a href="/addtolist?uri={item.uri}&next=1">and next</a>
+                        ]'''
         else:
             page += "<br>Nothing playing"
     except tk.HTTPError:
@@ -154,6 +157,8 @@ def add_to_list():
     track_uri = request.args.get('uri')
     spotify.playlist_add(current_playlist.id, [track_uri])
     playlist_tracks.add(track_uri)
+    if int(request.args.get('next', '0')):
+        spotify.playback_next()
     return redirect('/', 307)
 
 @app.route('/rmfromlist', methods=['GET'])
