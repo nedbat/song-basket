@@ -1,5 +1,7 @@
 """Spoton playlist manager."""
 
+import collections
+
 import tekore as tk
 from flask import Flask, request, redirect, session
 
@@ -131,12 +133,18 @@ def logout():
     return redirect('/', 307)
 
 def get_playlist_tracks(spotify, playlist):
+    track_count = collections.Counter()
     track_uris = set()
     offset = 0
     while offset < playlist.tracks.total:
         details = spotify.playlist_items(playlist.id, offset=offset)
         track_uris.update(track.track.uri for track in details.items)
+        track_count.update(track.track.id for track in details.items)
         offset += 100
+    for id, count in track_count.items():
+        if count > 1:
+            track = spotify.track(id)
+            print(f"Duplicate! {track!r}")
     return track_uris
 
 
