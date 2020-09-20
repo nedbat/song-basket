@@ -48,7 +48,7 @@ def get_token():
 
     return uid, token
 
-@app.route('/', methods=['GET'])
+@app.route('/')
 def main():
     uid, token = get_token()
     if token is None:
@@ -89,7 +89,7 @@ def main():
 
     return page
 
-@app.route('/playlists', methods=['GET'])
+@app.route('/playlists')
 def playlists():
     uid, token = get_token()
     spotify = tk.Spotify(token)
@@ -101,7 +101,7 @@ def playlists():
     page += "</ul>"
     return page
 
-@app.route('/login', methods=['GET'])
+@app.route('/login')
 def login():
     if 'user' in session:
         return redirect('/', 307)
@@ -109,7 +109,7 @@ def login():
     auth = tk.UserAuth(cred, SCOPE)
     return redirect(auth.url, 307)
 
-@app.route('/callback', methods=['GET'])
+@app.route('/callback')
 def login_callback():
     code = request.args.get('code', None)
     state = request.args.get('state', None)
@@ -125,7 +125,7 @@ def login_callback():
     users[state] = token
     return redirect('/', 307)
 
-@app.route('/logout', methods=['GET'])
+@app.route('/logout')
 def logout():
     uid = session.pop('user', None)
     if uid is not None:
@@ -148,7 +148,7 @@ def get_playlist_tracks(spotify, playlist):
     return track_uris
 
 
-@app.route('/setplaylist', methods=['GET'])
+@app.route('/setplaylist')
 def set_playlist():
     global current_playlist, playlist_tracks
     uid, token = get_token()
@@ -158,7 +158,7 @@ def set_playlist():
     playlist_tracks = get_playlist_tracks(spotify, current_playlist)
     return redirect('/', 307)
     
-@app.route('/addtolist', methods=['GET'])
+@app.route('/addtolist')
 def add_to_list():
     uid, token = get_token()
     spotify = tk.Spotify(token)
@@ -169,7 +169,7 @@ def add_to_list():
         spotify.playback_next()
     return redirect('/', 307)
 
-@app.route('/rmfromlist', methods=['GET'])
+@app.route('/rmfromlist')
 def rm_from_list():
     uid, token = get_token()
     spotify = tk.Spotify(token)
