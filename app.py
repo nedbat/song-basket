@@ -55,6 +55,7 @@ def main():
         return "[<a href='/login'>Login</a>]"
 
     page = "<!DOCTYPE html><html><head>"
+    page += "<title>Song Basket</title>"
     page += "<meta http-equiv='refresh' content='5'>"
     page += "<style>.track { font-weight: bold; } .playlist { font-weight: bold; }</style>"
     page += "<body>"
