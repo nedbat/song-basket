@@ -2,9 +2,11 @@
 
 import collections
 
+import dotenv
 import tekore as tk
 from flask import Flask, request, redirect, session
 
+dotenv.load_dotenv()
 cred = tk.Credentials(*tk.config_from_environment())
 
 # User tokens: state -> token (use state as a user ID)
@@ -28,7 +30,6 @@ SCOPE = (
 )
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'sP0t0N'
 
 def get_token():
     uid = session.get('user', None)

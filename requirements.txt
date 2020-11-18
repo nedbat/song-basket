@@ -1,2 +1,4 @@
 tekore
 Flask
+gunicorn
+python-dotenv
