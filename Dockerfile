@@ -11,7 +11,6 @@ COPY --chown=songbasket:songbasket . ./
 RUN pip3 install --no-cache-dir -U pip \
  && pip3 install --no-cache-dir -r requirements.txt
 
-ENV FLASK_APP webapp
 USER songbasket
 
 EXPOSE 5000

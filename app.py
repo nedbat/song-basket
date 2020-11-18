@@ -1,6 +1,7 @@
-"""Spoton playlist manager."""
+"""Songbasket playlist manager."""
 
 import collections
+import os
 
 import dotenv
 import tekore as tk
@@ -30,6 +31,7 @@ SCOPE = (
 )
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
 
 def get_token():
     uid = session.get('user', None)
