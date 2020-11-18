@@ -6,10 +6,11 @@ RUN addgroup -S songbasket \
 
 WORKDIR /usr/src/app
 
-COPY --chown=songbasket:songbasket . ./
-
+COPY --chown=songbasket:songbasket requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir -U pip \
  && pip3 install --no-cache-dir -r requirements.txt
+
+COPY --chown=songbasket:songbasket . ./
 
 USER songbasket
 
