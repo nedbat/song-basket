@@ -53,12 +53,14 @@ def get_token():
 
 @app.route('/')
 def main():
-    uid, token = get_token()
-    if token is None:
-        return "[<a href='/login'>Login</a>]"
-
     page = "<!DOCTYPE html><html><head>"
     page += "<title>Song Basket</title>"
+
+    uid, token = get_token()
+    if token is None:
+        page += "<body>[<a href='/login'>Login</a>]"
+        return page
+
     page += "<meta http-equiv='refresh' content='5'>"
     page += "<style>.track { font-weight: bold; } .playlist { font-weight: bold; }</style>"
     page += "<body>"
