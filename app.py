@@ -79,15 +79,18 @@ def main():
         playback = spotify.playback_currently_playing()
         if playback:
             item = playback.item
-            page += f"<br>Playing: <span class='track'>{item.name}</span>"
-            if playlist_tracks:
-                if item.uri in playlist_tracks:
-                    page += f' in playlist. [<a href="/rmfromlist?uri={item.uri}">Remove</a>]'
-                else:
-                    page += f''' [
-                        <a href="/addtolist?uri={item.uri}">Add to playlist</a>
-                        <a href="/addtolist?uri={item.uri}&next=1">and next</a>
-                        ]'''
+            if item is not None:
+                page += f"<br>Playing: <span class='track'>{item.name}</span>"
+                if playlist_tracks:
+                    if item.uri in playlist_tracks:
+                        page += f' in playlist. [<a href="/rmfromlist?uri={item.uri}">Remove</a>]'
+                    else:
+                        page += f''' [
+                            <a href="/addtolist?uri={item.uri}">Add to playlist</a>
+                            <a href="/addtolist?uri={item.uri}&next=1">and next</a>
+                            ]'''
+            else:
+                page += "<br>Playing, but nothing?"
         else:
             page += "<br>Nothing playing"
     except tk.HTTPError:
