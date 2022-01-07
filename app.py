@@ -83,7 +83,10 @@ def main():
                 page += f"<br>Playing: <span class='track'>{item.name}</span>"
                 if playlist_tracks:
                     if item.uri in playlist_tracks:
-                        page += f' in playlist. [<a href="/rmfromlist?uri={item.uri}">Remove</a>]'
+                        page += f''' in playlist. [
+                            <a href="/rmfromlist?uri={item.uri}">Remove</a>&nbsp;
+                            <a href="/nextsong">next</a>
+                            ]'''
                     else:
                         page += f''' [
                             <a href="/addtolist?uri={item.uri}">Add to playlist</a>&nbsp;
