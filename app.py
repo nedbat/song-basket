@@ -86,8 +86,9 @@ def main():
                         page += f' in playlist. [<a href="/rmfromlist?uri={item.uri}">Remove</a>]'
                     else:
                         page += f''' [
-                            <a href="/addtolist?uri={item.uri}">Add to playlist</a>
-                            <a href="/addtolist?uri={item.uri}&next=1">and next</a>
+                            <a href="/addtolist?uri={item.uri}">Add to playlist</a>&nbsp;
+                            <a href="/addtolist?uri={item.uri}&next=1">and next</a>&nbsp;
+                            <a href="/nextsong">or skip</a>
                             ]'''
             else:
                 page += "<br>Playing, but nothing?"
@@ -176,6 +177,13 @@ def add_to_list():
     playlist_tracks.add(track_uri)
     if int(request.args.get('next', '0')):
         spotify.playback_next()
+    return redirect('/', 307)
+
+@app.route('/nextsong')
+def next_song():
+    uid, token = get_token()
+    spotify = tk.Spotify(token)
+    spotify.playback_next()
     return redirect('/', 307)
 
 @app.route('/rmfromlist')
